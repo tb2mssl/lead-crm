@@ -41,7 +41,7 @@ if os.environ.get("RENDER"):  # behind Render's proxy: use the real client IP
 ADMIN_USER = os.environ.get("ADMIN_USERNAME", "").strip()
 ADMIN_HASH = os.environ.get("ADMIN_PASSWORD") or (
     generate_password_hash(os.environ["ADMIN_USERNAME"]) if os.environ.get("ADMIN_PASSWORD") else "")
-INGEST_API_KEY = os.environ.get("INGEST_API_KEY", "")
+INGEST_API = os.environ.get("INGEST_API_KEY", "")
 
 
 # ---------- database ----------
