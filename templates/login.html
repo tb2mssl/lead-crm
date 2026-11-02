@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in · Lead pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth">
+  <main class="panel login">
+    <h1>Lead pipeline</h1>
+    <p>Log in to view and manage your leads.</p>
+    {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="{{ url_for('login') }}">
+      <input type="hidden" name="next" value="{{ next }}">
+      <label>Username<input name="username" autocomplete="username" autofocus required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <button class="btn primary" type="submit">Log in</button>
+    </form>
+  </main>
+</body>
+</html>
