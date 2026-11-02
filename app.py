@@ -29,7 +29,7 @@ app = Flask(__name__)
 if not os.environ.get("SECRET_KEY"):
     print("WARNING: SECRET_KEY is not set. Using a temporary key; everyone is logged out on restart.")
 app.config.update(
-    SECRET_KEY=os.environ.get("SECRET_KEY") or secrets.token_hex(32),
+    SECRET_KEY=os.environ.get("SECRET_KEY") #or secrets.token_hex(32),
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")) or os.environ.get("COOKIE_SECURE") == "1",
