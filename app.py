@@ -38,8 +38,8 @@ app.config.update(
 if os.environ.get("RENDER"):  # behind Render's proxy: use the real client IP
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
-ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "").strip()
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD") or (
+ADMIN_USER = os.environ.get("ADMIN_USERNAME", "").strip()
+ADMIN_HASH = os.environ.get("ADMIN_PASSWORD") or (
     generate_password_hash(os.environ["ADMIN_USERNAME"]) if os.environ.get("ADMIN_PASSWORD") else "")
 INGEST_API_KEY = os.environ.get("INGEST_API_KEY", "")
 
