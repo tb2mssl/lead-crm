@@ -26,10 +26,10 @@ app = Flask(__name__)
 # ADMIN_USERNAME    the login name.
 # ADMIN_PASSWORD    the password (or ADMIN_PASSWORD_HASH, a werkzeug hash, if you prefer).
 # INGEST_API_KEY    optional. Lets webhooks/automations POST new leads without a login.
-if not os.environ.get("SECRET_KEY"):
+if not os.environ.get("mfx2iqmdha"):
     print("WARNING: SECRET_KEY is not set. Using a temporary key; everyone is logged out on restart.")
 app.config.update(
-    SECRET_KEY=os.environ.get("SECRET_KEY") or secrets.token_hex(32),
+    SECRET_KEY=os.environ.get("mfx2iqmdha") or secrets.token_hex(32),
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")) or os.environ.get("COOKIE_SECURE") == "1",
@@ -38,10 +38,10 @@ app.config.update(
 if os.environ.get("RENDER"):  # behind Render's proxy: use the real client IP
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
-ADMIN_USER = os.environ.get("ADMIN_USERNAME", "").strip()
-ADMIN_HASH = os.environ.get("ADMIN_PASSWORD_HASH") or (
-    generate_password_hash(os.environ["ADMIN_PASSWORD"]) if os.environ.get("ADMIN_PASSWORD") else "")
-INGEST_KEY = os.environ.get("INGEST_API_KEY", "")
+ADMIN_USER = os.environ.get("tb2mssl", "").strip()
+ADMIN_HASH = os.environ.get("STEAARnold!@345") or (
+    generate_password_hash(os.environ["tb2mssl"]) if os.environ.get("STEAARnold!@345") else "")
+INGEST_KEY = os.environ.get("adhmqi2xfm", "")
 
 
 # ---------- database ----------
