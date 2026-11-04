@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Lead pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Admin</h1>
+      <p>Manage registered users. Only the admin can delete leads or users.</p>
+    </div>
+    <div class="top-actions">
+      <span class="who">Admin: {{ admin }}</span>
+      <a class="btn" href="{{ url_for('index') }}">Leads dashboard</a>
+      <form method="post" action="{{ url_for('logout') }}"><button class="btn">Log out</button></form>
+    </div>
+  </header>
+  <main>
+    <section class="panel leads">
+      <div class="toolbar"><h2>Registered users <small id="count"></small></h2></div>
+      <div class="scroll">
+        <table style="min-width:640px">
+          <thead><tr><th>Username</th><th>Email</th><th>Mobile</th><th>Joined</th><th></th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function toast(m, err) { const t = $('#toast'); t.textContent = m; t.className = 'show' + (err ? ' error' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => t.className = '', 2500); }
+    async function api(url, opts = {}) {
+      const r = await fetch(url, { headers: { 'X-Requested-With': 'fetch' }, ...opts });
+      if (r.status === 401 || r.status === 403) { location.href = '/admin/login'; throw new Error('Admin access only.'); }
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Request failed');
+      return r.status === 204 ? null : r.json();
+    }
+    async function load() {
+      const users = await api('/api/admin/users');
+      $('#count').textContent = users.length;
+      $('#tbody').innerHTML = users.length ? users.map((u) => `
+        <tr data-id="${u.id}"><td><strong>${esc(u.username)}</strong></td><td>${esc(u.email)}</td><td>${esc(u.phone) || '-'}</td>
+        <td>${esc(u.created_at)}</td><td class="actions"><button class="link danger" data-name="${esc(u.username)}">Delete</button></td></tr>`).join('')
+        : '<tr><td colspan="5" class="empty">No users have signed up yet.</td></tr>';
+    }
+    $('#tbody').addEventListener('click', async (e) => {
+      const b = e.target.closest('button[data-name]'); if (!b) return;
+      if (!confirm(`Delete user "${b.dataset.name}"? They will be logged out and can no longer log in.`)) return;
+      try { await api(`/api/admin/users/${b.closest('tr').dataset.id}`, { method: 'DELETE' }); toast('User deleted'); load(); }
+      catch (err) { toast(err.message, true); }
+    });
+    load().catch((e) => toast(e.message, true));
+  </script>
+</body>
+</html>
