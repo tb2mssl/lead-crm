@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Lead pipeline</title>
+  <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-login="{{ url_for('admin_login') }}">
+  <header class="top">
+    <div>
+      <h1>Admin</h1>
+      <p>Approve new users, add or remove users, and manage accounts. Everything here is done on this page. Only the admin can delete leads.</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn" type="button" data-theme-toggle>Dark</button>
+      <span class="who">Admin: {{ admin }}</span>
+      <a class="btn" href="{{ url_for('index') }}">Leads dashboard</a>
+      <form method="post" action="{{ url_for('logout') }}"><button class="btn">Log out</button></form>
+    </div>
+  </header>
+  <main>
+    <section class="panel leads" id="waitingPanel">
+      <div class="toolbar"><h2>Waiting for approval <small id="waitingCount"></small></h2></div>
+      <div class="scroll"><table style="min-width:720px">
+        <thead><tr><th>Username</th><th>Email (confirmed)</th><th>Mobile</th><th>Signed up</th><th></th></tr></thead>
+        <tbody id="waitingBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel leads">
+      <div class="toolbar"><h2>Add a user</h2></div>
+      <form id="addForm" class="adduser">
+        <label>Email<input name="email" type="email" required placeholder="name@company.com"></label>
+        <label>Username (optional)<input name="username" maxlength="30" placeholder="taken from the email if blank"></label>
+        <label>Password (min 8)<input name="password" type="text" minlength="8" required autocomplete="off" placeholder="choose or generate"></label>
+        <button class="btn" type="button" id="genBtn">Generate</button>
+        <button class="btn primary" type="submit" id="addBtn">Add user</button>
+      </form>
+      <p class="hint">The user is active immediately, with no email or approval step. Give them the password yourself; they can change it later with "Forgot password".</p>
+    </section>
+
+    <section class="panel leads">
+      <div class="toolbar"><h2>Registered users <small id="usersCount"></small></h2></div>
+      <div class="scroll"><table style="min-width:720px">
+        <thead><tr><th>Username</th><th>Email</th><th>Mobile</th><th>Joined</th><th></th></tr></thead>
+        <tbody id="usersBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel leads">
+      <div class="toolbar"><h2>Waiting for email confirmation <small id="unconfCount"></small></h2></div>
+      <div class="scroll"><table style="min-width:720px">
+        <thead><tr><th>Username</th><th>Email</th><th>Mobile</th><th>Signed up (UTC)</th><th></th></tr></thead>
+        <tbody id="unconfBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel leads">
+      <div class="toolbar"><h2>Email</h2></div>
+      <p class="hint" style="padding-top:14px">{{ mail }}</p>
+      <form id="testForm" class="adduser" style="padding-top:0">
+        <label>Send a test email to<input name="email" type="email" required placeholder="any address you can check"></label>
+        <button class="btn" type="submit" id="testBtn">Send test</button>
+      </form>
+      <p class="hint">Sign-up confirmation and forgot-password emails are sent through your own mail server (SMTP settings on the server).</p>
+    </section>
+  </main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function toast(m, err) { const t = $('#toast'); t.textContent = m; t.className = 'show' + (err ? ' error' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => t.className = '', 3200); }
+    async function api(url, opts = {}) {
+      const r = await fetch(url, { headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'fetch' }, ...opts });
+      if (r.status === 401 || (r.status === 403 && url.startsWith('/api/admin'))) { location.href = '/admin/login?n=idle'; throw new Error('Admin access only.'); }
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Request failed');
+      return r.status === 204 ? null : r.json();
+    }
+    const row = (u, extra, buttons) => `<tr data-id="${u.id}" data-name="${esc(u.username)}"><td><strong>${esc(u.username)}</strong></td>
+      <td>${esc(u.email)}</td><td>${esc(u.phone) || '-'}</td><td>${esc(u.created_at)}</td><td class="actions">${buttons}</td></tr>`;
+    const none = (t) => `<tr><td colspan="5" class="empty">${t}</td></tr>`;
+    async function load() {
+      const d = await api('/api/admin/users');
+      $('#waitingCount').textContent = d.waiting.length; $('#usersCount').textContent = d.users.length; $('#unconfCount').textContent = d.unconfirmed.length;
+      $('#waitingBody').innerHTML = d.waiting.length ? d.waiting.map((u) => row(u, '',
+        '<button class="link" data-act="approve">Approve</button><button class="link danger" data-act="reject">Reject</button>')).join('') : none('Nobody is waiting for approval.');
+      $('#usersBody').innerHTML = d.users.length ? d.users.map((u) => row(u, '', '<button class="link danger" data-act="remove">Remove</button>')).join('') : none('No approved users yet.');
+      $('#unconfBody').innerHTML = d.unconfirmed.length ? d.unconfirmed.map((u) => row(u, '', '<button class="link danger" data-act="remove-pending">Remove</button>')).join('') : none('No unconfirmed sign-ups.');
+    }
+    document.addEventListener('click', async (e) => {
+      const b = e.target.closest('button[data-act]'); if (!b) return;
+      const tr = b.closest('tr'), id = tr.dataset.id, name = tr.dataset.name, act = b.dataset.act;
+      try {
+        if (act === 'approve') {
+          const r = await api(`/api/admin/users/${id}/approve`, { method: 'POST' });
+          toast(r.emailed ? `${name} approved and emailed` : `${name} approved (email could not be sent)`);
+        } else if (act === 'reject' || act === 'remove') {
+          if (!confirm(`${act === 'reject' ? 'Reject and remove' : 'Remove'} user "${name}"? They are logged out and can no longer log in.`)) return;
+          await api(`/api/admin/users/${id}`, { method: 'DELETE' }); toast('User removed');
+        } else if (act === 'remove-pending') {
+          if (!confirm(`Remove the unconfirmed sign-up for "${name}"? Their confirmation link stops working.`)) return;
+          await api(`/api/admin/pending/${id}`, { method: 'DELETE' }); toast('Sign-up removed');
+        }
+        load();
+      } catch (err) { toast(err.message, true); }
+    });
+    $('#addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.target, btn = $('#addBtn'); btn.disabled = true;
+      try {
+        const u = await api('/api/admin/users', { method: 'POST', body: JSON.stringify({ email: f.email.value, username: f.username.value, password: f.password.value }) });
+        toast(`User added: ${u.username} (${u.email})`); f.reset(); load();
+      } catch (err) { toast(err.message, true); }
+      btn.disabled = false;
+    });
+    $('#genBtn').addEventListener('click', () => {
+      const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', a = new Uint32Array(12);
+      crypto.getRandomValues(a);
+      $('#addForm').password.value = Array.from(a, (n) => chars[n % chars.length]).join('');
+    });
+    $('#testForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = $('#testBtn'); btn.disabled = true; btn.textContent = 'Sending...';
+      try { await api('/api/admin/test-email', { method: 'POST', body: JSON.stringify({ email: e.target.email.value }) }); toast('Test email sent. Check that inbox.'); }
+      catch (err) { toast(err.message, true); }
+      btn.disabled = false; btn.textContent = 'Send test';
+    });
+    load().catch((e) => toast(e.message, true));
+  </script>
+  <script src="{{ url_for('static', filename='idle.js') }}"></script>
+</body>
+</html>

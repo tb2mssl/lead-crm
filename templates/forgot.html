@@ -1,0 +1,18 @@
+{% extends "auth_base.html" %}
+{% block title %}Forgot password{% endblock %}
+{% block content %}
+    {% if sent %}
+      <h1>Check your email</h1>
+      <p>If <b>{{ email }}</b> is registered, we have sent a link to reset your password. The link works for 1 hour.</p>
+      <p class="alt"><a href="{{ url_for('login') }}">Back to log in</a></p>
+    {% else %}
+      <h1>Forgot your password?</h1>
+      <p>Enter the email on your account and we will send you a reset link.</p>
+      {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+      <form method="post" action="{{ url_for('forgot') }}">
+        <label>Email<input name="email" type="email" autocomplete="email" autofocus required></label>
+        <button class="btn primary" type="submit">Send reset link</button>
+      </form>
+      <p class="alt"><a href="{{ url_for('login') }}">Back to log in</a></p>
+    {% endif %}
+{% endblock %}

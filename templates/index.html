@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lead pipeline</title>
+  <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-login="{{ url_for('admin_login') if cfg.role == 'admin' else url_for('login') }}">
+  <header class="top">
+    <div>
+      <h1>Lead pipeline</h1>
+      <p>Follow every lead from first contact to close.</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn" type="button" data-theme-toggle>Dark</button>
+      <span class="who">{{ cfg.user }}{% if cfg.role == 'admin' %} (admin){% endif %}</span>
+      {% if cfg.role == 'admin' %}<a class="btn" href="{{ url_for('admin_page') }}">Manage users{% if cfg.waiting %} ({{ cfg.waiting }} waiting){% endif %}</a>{% endif %}
+      <form method="post" action="{{ url_for('logout') }}"><button class="btn">Log out</button></form>
+      <button class="btn primary" id="addBtn">Add lead</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel kpis" aria-label="Key numbers">
+      <div class="kpi"><span>Total leads</span><b id="kTotal">0</b></div>
+      <div class="kpi"><span>Open pipeline value</span><b id="kOpen">0</b></div>
+      <div class="kpi"><span>Won revenue</span><b id="kWon">0</b></div>
+      <div class="kpi"><span>Win rate (won vs lost)</span><b id="kRate">0%</b></div>
+    </section>
+
+    <section class="panel pipeline" aria-label="Leads by stage">
+      <h2>Where every lead stands</h2>
+      <div class="bar" id="stageBar"></div>
+      <ul class="legend" id="stageLegend"></ul>
+    </section>
+
+    <section class="charts" aria-label="Charts">
+      <div class="panel chart"><h2>Status split</h2><div class="canvas"><canvas id="cStatus"></canvas></div></div>
+      <div class="panel chart"><h2>Value by stage</h2><div class="canvas"><canvas id="cValue"></canvas></div></div>
+      <div class="panel chart"><h2>Leads by source</h2><div class="canvas"><canvas id="cSource"></canvas></div></div>
+      <div class="panel chart"><h2>New leads per month</h2><div class="canvas"><canvas id="cMonthly"></canvas></div></div>
+    </section>
+
+    <section class="panel leads" aria-label="All leads">
+      <div class="toolbar">
+        <h2>All leads <small id="count"></small></h2>
+        <div class="filters">
+          <input id="search" type="search" placeholder="Search name, company, email" aria-label="Search leads">
+          <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option></select>
+          <select id="sourceFilter" aria-label="Filter by source"><option value="">All sources</option></select>
+          <input id="dateFrom" type="date" aria-label="Added from">
+          <input id="dateTo" type="date" aria-label="Added to">
+          <button class="btn" id="clearBtn" type="button">Clear</button>
+          <button class="btn primary" id="xlsBtn" type="button">Download Excel</button>
+        </div>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Lead</th><th>Contact</th><th>Source</th><th>Status</th><th class="num">Value</th><th>Added</th><th></th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="leadDlg">
+    <form id="leadForm" method="dialog">
+      <h2 id="dlgTitle">Add lead</h2>
+      <input type="hidden" name="id">
+      <div class="grid">
+        <label>Name<input name="name" required></label>
+        <label>Company<input name="company"></label>
+        <label>Email<input name="email" type="email"></label>
+        <label>Phone<input name="phone"></label>
+        <label>Source<select name="source"></select></label>
+        <label>Status<select name="status"></select></label>
+        <label class="wide">Deal value<input name="value" type="number" min="0" step="any" value="0"></label>
+        <label class="wide">Notes<textarea name="notes" rows="3"></textarea></label>
+      </div>
+      <div class="dlg-actions">
+        <button type="button" class="btn" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn primary">Save lead</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="delDlg">
+    <form method="dialog">
+      <h2>Delete this lead?</h2>
+      <p id="delText"></p>
+      <div class="dlg-actions">
+        <button value="cancel" class="btn">Keep lead</button>
+        <button value="ok" class="btn danger-solid" id="delOk">Delete lead</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script id="cfg" type="application/json">{{ cfg|tojson }}</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ url_for('static', filename='idle.js') }}"></script>
+</body>
+</html>

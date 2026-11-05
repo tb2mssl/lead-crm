@@ -1,0 +1,12 @@
+{% extends "auth_base.html" %}
+{% block title %}Choose a new password{% endblock %}
+{% block content %}
+    <h1>Choose a new password</h1>
+    <p>For <b>{{ username }}</b>.</p>
+    {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="{{ url_for('reset', token=token) }}">
+      <label>New password (min 8 characters)<input name="password" type="password" minlength="8" autocomplete="new-password" autofocus required></label>
+      <label>Confirm new password<input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label>
+      <button class="btn primary" type="submit">Save password</button>
+    </form>
+{% endblock %}

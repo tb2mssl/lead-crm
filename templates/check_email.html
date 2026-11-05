@@ -1,0 +1,16 @@
+{% extends "auth_base.html" %}
+{% block title %}Check your email{% endblock %}
+{% block content %}
+    <h1>Check your email</h1>
+    {% if resent %}
+      <p>If <b>{{ email }}</b> has a sign-up waiting, we have sent a new confirmation link.</p>
+    {% else %}
+      <p>We sent a confirmation link to <b>{{ email }}</b>. Click it to confirm your email. The link works for 24 hours. After that, the admin approves your account and you can log in.</p>
+    {% endif %}
+    <p>Not there? Check your spam folder, or send it again.</p>
+    <form method="post" action="{{ url_for('resend') }}">
+      <input type="hidden" name="email" value="{{ email }}">
+      <button class="btn" type="submit">Resend confirmation email</button>
+    </form>
+    <p class="alt"><a href="{{ url_for('login') }}">Back to log in</a></p>
+{% endblock %}
