@@ -10,6 +10,3 @@ Live demo: https://lead-crm-wug0.onrender.com
 **Admin** has a separate login at `/admin/login` (ID from `ADMIN_USERNAME`, reserved so nobody can sign up with it). Everything is done on the `/admin` page after logging in: approve/reject users, **add a user** (email + password you choose or generate; active immediately, no email involved), remove users, remove unconfirmed sign-ups, and send a test email to check the mail settings. Only the admin can delete leads.
 
 Users can view, add and edit leads and download Excel (with the current filters). Dark / light screen switch on every page.
-
-
-| `POST /api/account/password` | a logged-in user changes their own password |
